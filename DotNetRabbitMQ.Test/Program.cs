@@ -12,11 +12,12 @@ var rootCommand = new RootCommand {
         new Option<short>("--port", () => _port, "The port for RabbitMQ"),
         new Option<string>("--queue-name", () => _queueName, "The name of the queue that messages will be sent to"),
         new Option<int>("--delay", () => _delay, "The amount of delay between each message"),
+        new Option<bool>("--verbose", () => false, "Enable logging of the message being sent"),
     };
 rootCommand.Description = "Test Client for DotNetRabbitMQ. You can use this client to test the message published to client";
 
-rootCommand.Handler = CommandHandler.Create<string, short, string, int>((host, port, queueName, delay) => {
-    TestClient.Init(host, port, queueName, delay);
+rootCommand.Handler = CommandHandler.Create<string, short, string, int, bool>((host, port, queueName, delay, verbose) => {
+    TestClient.Init(host, port, queueName, delay, verbose);
 });
 
 return rootCommand.InvokeAsync(args).Result;
