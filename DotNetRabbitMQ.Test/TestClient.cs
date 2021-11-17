@@ -5,6 +5,23 @@ using RabbitMQ.Client;
 public static class TestClient
 {
     /// <summary>
+    /// Initilization for Test Client
+    /// </summary>
+    /// <param name="hostName">The hostname of RabiitMQ</param>
+    /// <param name="port">The port of RabbitMQ</param>
+    /// <param name="queueName">The queue message are being sent to</param>
+    /// <param name="delay">The delay between each message</param>
+    public static void Init(string hostName, short port, string queueName, int delay)
+    {
+        ConnectionFactory factory = new() { HostName = hostName, Port = port };
+        using IConnection connection = factory.CreateConnection();
+        using IModel channel = connection.CreateModel();
+
+        Console.WriteLine($"Starting test to {hostName}:{port} for {queueName} with {delay}ms delay");
+        Start(channel, queueName, delay);
+    }
+
+    /// <summary>
     /// Send a test message to the queue after a delay
     /// </summary>
     /// <param name="channel">The IModel for the RabbitMQ Channel</param>
