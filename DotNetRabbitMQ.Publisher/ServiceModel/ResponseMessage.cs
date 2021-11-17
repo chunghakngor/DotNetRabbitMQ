@@ -1,4 +1,4 @@
-﻿namespace DotnetRabbitMQ.Publisher.ServiceModels;
+﻿namespace DotNetRabbitMQ.Publisher.ServiceModels;
 
 public record OkResponseMessage(string Status, string Message, string Content = null);
 

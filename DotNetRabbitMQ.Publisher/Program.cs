@@ -9,6 +9,7 @@ app.UseSwaggerUI();
 
 const string _hostName = "localhost";
 const int _port = 5672;
+const string _queueName = "testQueue";
 
 app.MapGet("/send/{message}", (IPublisher publisher, string message) => {
 	if (string.IsNullOrEmpty(message)) {
@@ -19,8 +20,7 @@ app.MapGet("/send/{message}", (IPublisher publisher, string message) => {
 	using IConnection connection = factory.CreateConnection();
 	using IModel channel = connection.CreateModel();
 
-	byte[] messageBody = JsonSerializer.SerializeToUtf8Bytes(message);
-	publisher.SendMessage(channel, "testQueue", messageBody);
+	publisher.SendMessage(channel, _queueName, message);
 
 	return Results.Ok(new OkResponseMessage("Ok", "Your message has been sent to the queue!", message));
 }).Produces<OkResponseMessage>(200, "application/json").Produces<BadResponseMessage>(400, "application/json");
@@ -35,7 +35,7 @@ app.MapPost("/send", (IPublisher publisher, [FromBody] RequestMessage message) =
 	using IModel channel = connection.CreateModel();
 
 	byte[] messageBody = JsonSerializer.SerializeToUtf8Bytes(message.Message);
-	publisher.SendMessage(channel, "testQueue", messageBody);
+	publisher.SendMessage(channel, _queueName, messageBody);
 	return Results.Ok(new OkResponseMessage("Ok", "Your message has been sent to the queue!", message.Message));
 }).Produces<OkResponseMessage>(200, "application/json").Produces<BadResponseMessage>(400, "application/json");
 

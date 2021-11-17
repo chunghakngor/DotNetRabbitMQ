@@ -1,4 +1,4 @@
-﻿namespace DotnetRabbitMQ.Publisher.ServiceModels;
+﻿namespace DotNetRabbitMQ.Publisher.ServiceModels;
 
 public class RequestMessage
 {
