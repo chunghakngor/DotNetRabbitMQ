@@ -1,37 +1,42 @@
-﻿using System.Text.Json;
-using RabbitMQ.Client;
+﻿WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddSingleton<IPublisher, Publisher>();
 
-Console.WriteLine("Starting RabbitMQ Publisher!");
-
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 WebApplication app = builder.Build();
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.MapGet("/send",
-           httpContext => {
-               if (!httpContext.Request.Query.ContainsKey("message")) {
-                   return httpContext.Response.WriteAsJsonAsync(new ResponseMessage("Error", "You need to send a message as a query parameter"));
-               }
+const string _hostName = "localhost";
+const int _port = 5672;
 
-               string message = httpContext.Request.Query["message"];
-               if (string.IsNullOrEmpty(message)) {
-                   return httpContext.Response.WriteAsJsonAsync(new ResponseMessage("Error", "Your message cannot be null or empty"));
-               }
+app.MapGet("/send/{message}", (IPublisher publisher, string message) => {
+	if (string.IsNullOrEmpty(message)) {
+		return Results.BadRequest(new BadResponseMessage("Error", "Your message cannot be null or empty"));
+	}
 
-               byte[] messageBody = JsonSerializer.SerializeToUtf8Bytes(message);
+	ConnectionFactory factory = new() { HostName = _hostName, Port = _port };
+	using IConnection connection = factory.CreateConnection();
+	using IModel channel = connection.CreateModel();
 
-               ConnectionFactory factory = new() {HostName = "localhost", Port = 5672};
-               using IConnection connection = factory.CreateConnection();
-               using IModel channel = connection.CreateModel();
+	byte[] messageBody = JsonSerializer.SerializeToUtf8Bytes(message);
+	publisher.SendMessage(channel, "testQueue", messageBody);
 
-               string queueName = "testQueue";
-               channel.QueueDeclare(queueName, false, false, false, null);
+	return Results.Ok(new OkResponseMessage("Ok", "Your message has been sent to the queue!", message));
+}).Produces<OkResponseMessage>(200, "application/json").Produces<BadResponseMessage>(400, "application/json");
 
-               channel.BasicPublish("", queueName, null, messageBody);
-               Console.WriteLine($"Send message to {queueName}");
+app.MapPost("/send", (IPublisher publisher, [FromBody] RequestMessage message) => {
+	if (message == null || string.IsNullOrEmpty(message.Message)) {
+		return Results.BadRequest(new BadResponseMessage("Error", "Your message cannot be null or empty"));
+	}
 
-               return httpContext.Response.WriteAsJsonAsync(new ResponseMessage("Ok", "Your message has been sent to the queue!", message));
-           });
+	ConnectionFactory factory = new() { HostName = _hostName, Port = _port };
+	using IConnection connection = factory.CreateConnection();
+	using IModel channel = connection.CreateModel();
+
+	byte[] messageBody = JsonSerializer.SerializeToUtf8Bytes(message.Message);
+	publisher.SendMessage(channel, "testQueue", messageBody);
+	return Results.Ok(new OkResponseMessage("Ok", "Your message has been sent to the queue!", message.Message));
+}).Produces<OkResponseMessage>(200, "application/json").Produces<BadResponseMessage>(400, "application/json");
 
 await app.RunAsync();
-
-public record ResponseMessage(string Status, string Message, string Content = null);
