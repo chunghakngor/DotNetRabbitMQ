@@ -13,11 +13,6 @@
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
 	</ItemGroup>
 	<ItemGroup>
-		<None Remove="Swashbuckle.AspNetCore" />
-		<None Remove="ServiceModel\" />
-		<None Remove="DependencyInjection\" />
-	</ItemGroup>
-	<ItemGroup>
 		<Folder Include="ServiceModel\" />
 		<Folder Include="DependencyInjection\" />
 	</ItemGroup>
